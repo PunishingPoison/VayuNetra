@@ -1,0 +1,3 @@
+[submodule "unreal/Plugins/SplatRenderer"]
+	path = unreal/Plugins/SplatRenderer
+	url = https://github.com/DazaiStudio/SplatRenderer-UEPlugin.git
