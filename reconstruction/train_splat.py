@@ -10,11 +10,11 @@ def train_splat(data_dir, output_dir):
     cmd = [
         "ns-train",
         "splatfacto",
-        "--data", data_dir,
         "--output-dir", output_dir,
-        "--pipeline.model.cull_alpha_thresh", "0.005",
-        "--pipeline.model.continue_cull_post_densification", "False",
-        "--viewer.websocket-port", "7007"
+        "--viewer.websocket-port", "7007",
+        "colmap",
+        "--data", data_dir,
+        "--colmap-path", os.path.join(base_dir, 'data', 'colmap', 'sparse', '0')
     ]
     
     # This spawns the training process. 
@@ -24,11 +24,23 @@ def train_splat(data_dir, output_dir):
 
 if __name__ == "__main__":
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    data_dir = os.path.join(base_dir, 'data', 'processed', 'frames') # Nerfstudio parses COLMAP out of here
-    # Assuming colmap data is actually in data/colmap or data/processed/frames/colmap
-    # Standard Nerfstudio expects a 'colmap' folder inside the data_dir, so we should ensure 
-    # our colmap pipeline writes to data_dir/colmap/sparse/0
     
+    # Give Nerfstudio the base data folder, and explicitly tell it where images and colmap are
+    data_dir = os.path.join(base_dir, 'data')
+    images_dir = os.path.join(base_dir, 'data', 'processed', 'frames')
+    colmap_dir = os.path.join(base_dir, 'data', 'colmap', 'sparse', '0')
     output_dir = os.path.join(base_dir, 'outputs', 'splats')
     
-    train_splat(data_dir, output_dir)
+    cmd = [
+        "ns-train",
+        "splatfacto",
+        "--output-dir", output_dir,
+        "--viewer.websocket-port", "7007",
+        "colmap",
+        "--data", data_dir,
+        "--images-path", images_dir,
+        "--colmap-path", colmap_dir
+    ]
+    
+    print(f"Executing: {' '.join(cmd)}")
+    subprocess.run(cmd)

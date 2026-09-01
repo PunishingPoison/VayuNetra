@@ -22,21 +22,15 @@ def main():
     print("Taking off...")
     client.takeoffAsync().join()
 
-    # Move to starting position (e.g., higher altitude)
-    print("Moving to start position...")
-    client.moveToPositionAsync(0, 0, -20, 5).join()
-    
-    # We will fly a straight line pass over the scene
-    start_pt = airsim.Vector3r(0, -50, -20)
-    end_pt = airsim.Vector3r(0, 50, -20)
-    velocity = 3.0 # m/s
-    
-    client.moveToPositionAsync(start_pt.x_val, start_pt.y_val, start_pt.z_val, velocity).join()
+    print("Gaining altitude...")
+    # Move straight up 15 meters to clear trees/houses
+    client.moveToZAsync(-15, 3).join()
     
     print("Starting single-pass capture...")
     
-    # Start the actual flyby pass asynchronously
-    fly_task = client.moveToPositionAsync(end_pt.x_val, end_pt.y_val, end_pt.z_val, velocity)
+    # Fly straight forward (X-axis) at 4 meters per second for 15 seconds
+    fly_duration = 15.0
+    client.moveByVelocityAsync(4, 0, 0, fly_duration)
     
     # Open telemetry CSV
     with open(telemetry_file, mode='w', newline='') as f:
@@ -44,12 +38,13 @@ def main():
         writer.writerow(['timestamp', 'image_name', 'lat', 'lon', 'alt', 'qw', 'qx', 'qy', 'qz'])
         
         frame_idx = 0
+        start_time = time.time()
         
         # Capture frames while moving
-        while not fly_task.is_done():
-            # Request image and kinematics
+        while (time.time() - start_time) < fly_duration:
+            # Request image and kinematics (set compress=True to get valid PNG bytes)
             responses = client.simGetImages([
-                airsim.ImageRequest("0", airsim.ImageType.Scene, False, False)
+                airsim.ImageRequest("0", airsim.ImageType.Scene, False, True)
             ])
             kinematics = client.simGetGroundTruthKinematics()
             gps = client.getMultirotorState().gps_location
