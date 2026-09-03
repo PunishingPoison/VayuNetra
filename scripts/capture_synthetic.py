@@ -1,86 +1,105 @@
-import os
-import time
-import json
-import csv
-import math
 import airsim
+import time
+import os
+import math
+import csv
+import shutil
+
+def clear_dir(path):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    os.makedirs(path)
 
 def main():
-    print("Connecting to Colosseum/AirSim...")
-    # Connect to the AirSim simulator
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    raw_dir = os.path.join(base_dir, 'raw')
+    processed_dir = os.path.join(base_dir, 'processed', 'frames')
+    colmap_dir = os.path.join(base_dir, 'colmap')
+    manifest_dir = os.path.join(base_dir, 'manifests')
+    
+    clear_dir(raw_dir)
+    clear_dir(processed_dir)
+    clear_dir(colmap_dir)
+    clear_dir(manifest_dir)
+    
+    print("Connecting to AirSim...")
     client = airsim.MultirotorClient()
     client.confirmConnection()
     client.enableApiControl(True)
     client.armDisarm(True)
-
-    # Setup directories
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
-    raw_dir = os.path.join(base_dir, 'raw')
-    telemetry_file = os.path.join(raw_dir, 'telemetry.csv')
-    os.makedirs(raw_dir, exist_ok=True)
-
+    
     print("Taking off...")
     client.takeoffAsync().join()
-
-    print("Gaining altitude...")
-    # Move straight up 15 meters to clear trees/houses
-    client.moveToZAsync(-15, 3).join()
     
-    print("Starting single-pass capture...")
+    # Tilt camera down 35 degrees for photogrammetry
+    print("Tilting camera down for 3D scanning...")
+    pitch = -math.radians(35)
+    client.simSetCameraPose("0", airsim.Pose(airsim.Vector3r(0, 0, 0), airsim.to_quaternion(pitch, 0, 0)))
+    time.sleep(1)
     
-    # Fly straight forward (X-axis) at 4 meters per second for 15 seconds
-    fly_duration = 15.0
-    client.moveByVelocityAsync(4, 0, 0, fly_duration)
+    csv_file = open(os.path.join(raw_dir, 'telemetry.csv'), 'w', newline='')
+    writer = csv.writer(csv_file)
+    writer.writerow(['image_name', 'timestamp', 'lat', 'lon', 'alt', 'qw', 'qx', 'qy', 'qz'])
     
-    # Open telemetry CSV
-    with open(telemetry_file, mode='w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['timestamp', 'image_name', 'lat', 'lon', 'alt', 'qw', 'qx', 'qy', 'qz'])
-        
-        frame_idx = 0
-        start_time = time.time()
-        
-        # Capture frames while moving
-        while (time.time() - start_time) < fly_duration:
-            # Request image and kinematics (set compress=True to get valid PNG bytes)
-            responses = client.simGetImages([
-                airsim.ImageRequest("0", airsim.ImageType.Scene, False, True)
-            ])
-            kinematics = client.simGetGroundTruthKinematics()
-            gps = client.getMultirotorState().gps_location
+    def capture_frame(idx):
+        responses = client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.Scene)])
+        if responses:
+            res = responses[0]
+            filename = f"frame_{idx:03d}.png"
+            filepath = os.path.join(raw_dir, filename)
+            airsim.write_file(filepath, res.image_data_uint8)
             
-            if len(responses) > 0:
-                img_response = responses[0]
-                img_name = f"frame_{frame_idx:05d}.png"
-                img_path = os.path.join(raw_dir, img_name)
-                
-                # Save image
-                airsim.write_file(img_path, img_response.image_data_uint8)
-                
-                # Record telemetry
-                ts = time.time()
-                writer.writerow([
-                    ts,
-                    img_name,
-                    gps.latitude,
-                    gps.longitude,
-                    gps.altitude,
-                    kinematics.orientation.w_val,
-                    kinematics.orientation.x_val,
-                    kinematics.orientation.y_val,
-                    kinematics.orientation.z_val
-                ])
-                print(f"Captured {img_name}")
-                frame_idx += 1
-                
-            # Sleep to hit roughly target FPS (e.g., 5 FPS)
-            time.sleep(0.2)
+            gps = client.getMultirotorState().kinematics_estimated.position
+            ori = client.getMultirotorState().kinematics_estimated.orientation
+            writer.writerow([filename, time.time(), gps.x_val, gps.y_val, gps.z_val, ori.w_val, ori.x_val, ori.y_val, ori.z_val])
+            print(f"Captured {filename}")
 
-    print("Flyby complete. Landing...")
+    # FLIGHT PATH: Dual Orbit (Industry Standard Photogrammetry)
+    # Orbit 1: Outer wide circle
+    radius_1 = 30
+    alt_1 = -20
+    print(f"Starting Outer Orbit (Radius {radius_1}m, Alt {abs(alt_1)}m)...")
+    
+    idx = 0
+    for angle in range(0, 360, 15):
+        rad = math.radians(angle)
+        x = radius_1 * math.sin(rad)
+        y = radius_1 * math.cos(rad)
+        yaw = math.degrees(math.atan2(-y, -x))  # Look at center
+        
+        client.moveToPositionAsync(x, y, alt_1, 5).join()
+        client.rotateToYawAsync(yaw).join()
+        time.sleep(0.5) # Let drone stabilize to avoid blur
+        capture_frame(idx)
+        idx += 1
+
+    # Orbit 2: Inner tight circle
+    radius_2 = 15
+    alt_2 = -12
+    print(f"Starting Inner Orbit (Radius {radius_2}m, Alt {abs(alt_2)}m)...")
+    
+    for angle in range(0, 360, 20):
+        rad = math.radians(angle)
+        x = radius_2 * math.sin(rad)
+        y = radius_2 * math.cos(rad)
+        yaw = math.degrees(math.atan2(-y, -x))  # Look at center
+        
+        client.moveToPositionAsync(x, y, alt_2, 3).join()
+        client.rotateToYawAsync(yaw).join()
+        time.sleep(0.5)
+        capture_frame(idx)
+        idx += 1
+
+    csv_file.close()
+    
+    print("Scan complete! Returning home...")
+    client.moveToPositionAsync(0, 0, -10, 5).join()
     client.landAsync().join()
     client.armDisarm(False)
     client.enableApiControl(False)
-    print(f"Capture complete. Data saved to {raw_dir}")
+    print("Drone secured.")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
+
+

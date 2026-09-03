@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Data and Outputs
+data/
+outputs/
+temp_splat/
+*.ply
+*.mp4
+*.obj
+*.png
+*.jpg
+*.csv
+*.txt
+*.html
+
+# Unreal Engine
+unreal/Binaries/
+unreal/DerivedDataCache/
+unreal/Intermediate/
+unreal/Saved/
+unreal/.vs/
+unreal/*.sln
+unreal/Plugins/
+unreal/SplatRenderer_Broken/
