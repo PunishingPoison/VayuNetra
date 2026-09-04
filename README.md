@@ -1,5 +1,6 @@
-﻿# VayuNetra 
+﻿# VayuNetra
 
+[ INSERT PROJECT SCREENSHOT HERE ]
 
 ## Overview
 VayuNetra is an end-to-end, fully localized 3D Gaussian Splatting pipeline designed to generate photorealistic 3D models using synthetic drone data. 
@@ -80,6 +81,7 @@ Navigate to `C:\Users\YOUR_NAME\OneDrive\Documents\AirSim\settings.json` (or you
 
 ## Pipeline Workflow (How to Use)
 
+[ INSERT WORKFLOW/RESULTS SCREENSHOT HERE ]
 
 **Step 1: Record the Flight**
 Start your Unreal Engine simulation. Open your terminal, activate the `vayunetra` environment, and run the automated patrol:
@@ -103,3 +105,4 @@ python scripts/record_street_video.py
 ## Pro Tips for Gaussian Splatting
 * **The "Game Sky" Problem:** Video game skies are infinitely far away, which confuses SfM algorithms. Use Postshot's bounding box tool before training to crop out the sky and force the AI to focus strictly on the buildings.
 * **Motion Blur:** Drones snapping to waypoints cause motion blur, ruining photogrammetry. This is why VayuNetra utilizes continuous velocity vectors (`moveByVelocityAsync`) to guarantee buttery-smooth footage.
+
