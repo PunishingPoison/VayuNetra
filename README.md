@@ -1,7 +1,5 @@
 ﻿# VayuNetra 🚁✨
 
-![VayuNetra Showcase](put_your_main_screenshot_here.png)
-*(Placeholder: Insert a stunning screenshot of the final 3D Gaussian Splat or the drone flying in Unreal Engine here)*
 
 ## Overview
 VayuNetra is an end-to-end, fully localized 3D Gaussian Splatting pipeline designed to generate photorealistic 3D models using synthetic drone data. 
@@ -82,8 +80,6 @@ Navigate to `C:\Users\YOUR_NAME\OneDrive\Documents\AirSim\settings.json` (or you
 
 ## 🎬 Pipeline Workflow (How to Use)
 
-![Workflow Diagram](put_workflow_diagram_or_screenshot_here.png)
-*(Placeholder: Insert a screenshot showing Postshot training or Blender interface here)*
 
 **Step 1: Record the Flight**
 Start your Unreal Engine simulation. Open your terminal, activate the `vayunetra` environment, and run the automated patrol:
