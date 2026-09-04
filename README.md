@@ -1,4 +1,4 @@
-﻿# VayuNetra 🚁✨
+﻿# VayuNetra 
 
 
 ## Overview
@@ -6,7 +6,7 @@ VayuNetra is an end-to-end, fully localized 3D Gaussian Splatting pipeline desig
 
 By leveraging Unreal Engine 5, AirSim, and Python, VayuNetra automates the complex flight patterns required for professional photogrammetry. The captured high-definition video is then processed locally using Jawset Postshot and rendered seamlessly in Blender.
 
-## 🛠️ Technologies Used
+## Technologies Used
 * **Unreal Engine 5:** High-fidelity simulation and environment rendering.
 * **Microsoft AirSim:** Synthetic drone simulation and flight physics.
 * **Python & OpenCV:** Custom automated flight controllers, video processing, and manual WASD overrides.
@@ -15,7 +15,7 @@ By leveraging Unreal Engine 5, AirSim, and Python, VayuNetra automates the compl
 
 ---
 
-## 🚀 Key Features & Scripts
+## Key Features & Scripts
 
 VayuNetra includes several advanced flight controllers tailored for different 3D scanning scenarios:
 
@@ -37,7 +37,7 @@ VayuNetra includes several advanced flight controllers tailored for different 3D
 
 ---
 
-## ⚙️ Installation & Setup
+## Installation & Setup
 
 ### 1. Prerequisites
 * **Unreal Engine 5** (with your desired environment loaded)
@@ -78,7 +78,7 @@ Navigate to `C:\Users\YOUR_NAME\OneDrive\Documents\AirSim\settings.json` (or you
 
 ---
 
-## 🎬 Pipeline Workflow (How to Use)
+## Pipeline Workflow (How to Use)
 
 
 **Step 1: Record the Flight**
@@ -100,6 +100,6 @@ python scripts/record_street_video.py
 * Use the add-on's cropping tools to delete any "floaters" or sky artifacts.
 
 ---
-## 💡 Pro Tips for Gaussian Splatting
+## Pro Tips for Gaussian Splatting
 * **The "Game Sky" Problem:** Video game skies are infinitely far away, which confuses SfM algorithms. Use Postshot's bounding box tool before training to crop out the sky and force the AI to focus strictly on the buildings.
 * **Motion Blur:** Drones snapping to waypoints cause motion blur, ruining photogrammetry. This is why VayuNetra utilizes continuous velocity vectors (`moveByVelocityAsync`) to guarantee buttery-smooth footage.
